@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+// 练习1:添加更多顶点到数据中，使用glDrawArrays，尝试绘制两个彼此相连的三角形
+
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
 
