@@ -56,9 +56,9 @@ int main() {
     // ------
     float vertices[] = {
         // 位置              // 颜色
-        0.5f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // 右下
-        -0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // 左下
-        0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // 顶部
+        0.0f, -0.5f, 0.0f,  1.0f, 0.0f, 0.0f,   // 右下
+        -1.0f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,   // 左下
+        -0.5f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f    // 顶部
     };
 
     unsigned int VBO, VAO;
@@ -83,6 +83,7 @@ int main() {
 
     // render loop
     // -----------
+    float offset = 0.0;
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
 
@@ -90,7 +91,12 @@ int main() {
         // ------
         glClearColor(.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
+
+        if (offset < 0.99) {
+            offset += 0.01;
+        }
         ourShader.use();
+        ourShader.setFloat("offset", offset);
 
         glBindVertexArray(VAO);
         glDrawArrays(GL_TRIANGLES, 0, 3);
