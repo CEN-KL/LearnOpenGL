@@ -13,6 +13,8 @@ void processInput(GLFWwindow *window);
 const int SCR_WIDTH = 800;
 const int SCR_HEIGHT = 600;
 
+float mixVaule = 0.2f;
+
 int main() {
     // 查看当前路径
     // const int MAXPATH = 250;
@@ -162,6 +164,8 @@ int main() {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
 
+        ourShader.setFloat("mixValue", mixVaule);
+
         ourShader.use();
         glBindVertexArray(VAO);
         // glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -186,7 +190,22 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 }
 
 void processInput(GLFWwindow *window) {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) 
+    {
         glfwSetWindowShouldClose(window, true);
+    } 
+    else if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) 
+    {
+        mixVaule += 0.001;
+        if (mixVaule > 1.0f) {
+            mixVaule = 1.0f;
+        }
+    } 
+    else if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) 
+    {   
+        mixVaule -= 0.001;
+        if (mixVaule <= 0.0f) {
+            mixVaule = 0.0f;
+        }
     }
 }
