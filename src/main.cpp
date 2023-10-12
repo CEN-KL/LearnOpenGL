@@ -268,10 +268,12 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 }
 
 void processInput(GLFWwindow *window) {
+    // 处理Esc退出
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) 
     {
         glfwSetWindowShouldClose(window, true);
     }
+    // 处理WASD键盘移动
     float cameraSpeed = 2.5f * deltaTime;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
     {
