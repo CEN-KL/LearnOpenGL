@@ -1,8 +1,3 @@
-#include "glm/ext/matrix_clip_space.hpp"
-#include "glm/ext/matrix_transform.hpp"
-#include "glm/fwd.hpp"
-#include "glm/geometric.hpp"
-#include "glm/trigonometric.hpp"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stb_image.h>
@@ -11,12 +6,13 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <utils/shader_s.hpp>
+#include <utils/camera.hpp>
 // #include <unistd.h>
 
 #include <iostream>
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-void mouse_callback(GLFWwindow *window, double xpos, double ypos);
+void mouse_callback(GLFWwindow *window, double xposIn, double yposIn);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 
@@ -24,24 +20,16 @@ const int SCR_WIDTH = 800;
 const int SCR_HEIGHT = 600;
 
 // taffy图片透明度
-float taffy = 0.5f;
+float taffy = 0.2f;
 
-// 摄像机变量
-auto cameraPos   = glm::vec3(0.0f, 0.0f, 3.0f);
-auto cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-auto cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
-
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+// 上一帧的鼠标位置
+float lastX = SCR_WIDTH / 2.0f;
+float lastY = SCR_HEIGHT / 2.0f;
+bool firstMouse = true;
+// timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
-
-// 上一帧的鼠标位置
-float lastX = 400, lastY = 300;
-// 俯仰角pitch、偏航角yaw
-float pitch = 0.0, yaw = -90.0;
-bool firstMouse = true;
-
-// 视口大小
-float fov = 45.0f;
 
 int main() {
     // 查看当前路径
@@ -64,8 +52,7 @@ int main() {
 
     // glfw window creation
     // --------------------
-    // 🩷关注永雏塔菲喵🩷关注永雏塔菲谢谢喵🩷
-    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "🩷关注永雏塔菲喵🩷关注永雏塔菲谢谢喵🩷", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
     if (window == NULL) {
         std::cout << "failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -198,7 +185,7 @@ int main() {
     // 设置过滤参数
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    data = stbi_load("/Users/ckl/VSCodeCpp/LearnOpenGL/img/taffy.png", &width, &height, &nrChannels, 0);
+    data = stbi_load("/Users/ckl/VSCodeCpp/LearnOpenGL/img/awesomeface.png", &width, &height, &nrChannels, 0);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -246,7 +233,7 @@ int main() {
         // 模型矩阵 放到循环中
         // 投影矩阵
         glm::mat4 projection = glm::mat4(1.0f);
-        projection = glm::perspective(glm::radians(fov), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(camera.Zoom), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
 
         ourShader.use();
         ourShader.setMat4("projection", projection);
@@ -264,8 +251,7 @@ int main() {
             float radius = 10.0f;
             float camX = sin(glfwGetTime()) * radius;
             float camZ = cos(glfwGetTime()) * radius;
-            glm::mat4 view;
-            view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+            glm::mat4 view = camera.GetViewMatrix();
             ourShader.setMat4("view", view);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -299,21 +285,14 @@ void processInput(GLFWwindow *window)
     // 处理WASD键盘移动
     float cameraSpeed = 2.5f * deltaTime;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-    {
-        cameraPos += cameraSpeed * cameraFront;
-    }
+        camera.ProcessKeyboard(FORWARD, deltaTime);
     else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-    {
-        cameraPos -= cameraSpeed * cameraFront;
-    }
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
     else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) 
-    {
-        cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
-    }
+        camera.ProcessKeyboard(RIGHT, deltaTime);
     else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-    {
-        cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
-    }
+        camera.ProcessKeyboard(LEFT, deltaTime);
+
     // 处理taffy透明度
     float deltaTaffy = 0.01;
     if (glfwGetKey(window, GLFW_KEY_KP_ADD) == GLFW_PRESS) 
@@ -330,43 +309,28 @@ void processInput(GLFWwindow *window)
     }
 }
 
-void mouse_callback(GLFWwindow *window, double xpos, double ypos) 
+void mouse_callback(GLFWwindow *window, double xposIn, double yposIn) 
 {
-    if (firstMouse) {
+    float xpos = static_cast<float>(xposIn);
+    float ypos = static_cast<float>(yposIn);
+
+    if (firstMouse) 
+    {
         lastX = xpos;
         lastY = ypos;
         firstMouse = false;
     }
 
     float xoffset = xpos - lastX;
-    float yoffset = ypos - lastY;
+    float yoffset = lastY - ypos;  // 注意：这里是反过来，因为y轴是从下到上
+
     lastX = xpos;
     lastY = ypos;
 
-    float sensitivity = 0.05f;
-    xoffset *= sensitivity;
-    yoffset *= sensitivity;
-
-    yaw += xoffset;
-    pitch -= yoffset;
-
-    if (pitch > 89.0f) 
-        pitch = 89.0f;
-    if (pitch < -89.0f)
-        pitch = -89.0f;
-
-    glm::vec3 front;
-    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    front.y = sin(glm::radians(pitch));
-    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraFront = glm::normalize(front);
+    camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) 
 {
-    fov -= (float) yoffset;
-    if (fov < 1.0f)
-        fov = 1.0f;
-    if (fov > 45.0f)
-        fov = 45.0f;
+    camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
