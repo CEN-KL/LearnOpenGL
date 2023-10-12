@@ -1,6 +1,7 @@
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/fwd.hpp"
+#include "glm/geometric.hpp"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stb_image.h>
@@ -18,6 +19,14 @@ void processInput(GLFWwindow *window);
 
 const int SCR_WIDTH = 800;
 const int SCR_HEIGHT = 600;
+
+// 摄像机变量
+auto cameraPos   = glm::vec3(0.0f, 0.0f, 3.0f);
+auto cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+auto cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
+
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
 
 int main() {
     // 查看当前路径
@@ -201,6 +210,11 @@ int main() {
         glClearColor(.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // 跟踪时间差
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
         // 绑定纹理
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
@@ -230,7 +244,7 @@ int main() {
             float camX = sin(glfwGetTime()) * radius;
             float camZ = cos(glfwGetTime()) * radius;
             glm::mat4 view;
-            view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+            view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
             ourShader.setMat4("view", view);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -254,7 +268,25 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
 }
 
 void processInput(GLFWwindow *window) {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) 
+    {
         glfwSetWindowShouldClose(window, true);
+    }
+    float cameraSpeed = 2.5f * deltaTime;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    {
+        cameraPos += cameraSpeed * cameraFront;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    {
+        cameraPos -= cameraSpeed * cameraFront;
+    }
+    else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) 
+    {
+        cameraPos += cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
+    }
+    else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    {
+        cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
     }
 }
