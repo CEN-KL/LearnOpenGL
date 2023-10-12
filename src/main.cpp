@@ -2,6 +2,7 @@
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/fwd.hpp"
 #include "glm/geometric.hpp"
+#include "glm/trigonometric.hpp"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <stb_image.h>
@@ -15,10 +16,15 @@
 #include <iostream>
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
+void mouse_callback(GLFWwindow *window, double xpos, double ypos);
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 
 const int SCR_WIDTH = 800;
 const int SCR_HEIGHT = 600;
+
+// taffy图片透明度
+float taffy = 0.5f;
 
 // 摄像机变量
 auto cameraPos   = glm::vec3(0.0f, 0.0f, 3.0f);
@@ -27,6 +33,15 @@ auto cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+// 上一帧的鼠标位置
+float lastX = 400, lastY = 300;
+// 俯仰角pitch、偏航角yaw
+float pitch = 0.0, yaw = -90.0;
+bool firstMouse = true;
+
+// 视口大小
+float fov = 45.0f;
 
 int main() {
     // 查看当前路径
@@ -49,7 +64,8 @@ int main() {
 
     // glfw window creation
     // --------------------
-    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+    // 🩷关注永雏塔菲喵🩷关注永雏塔菲谢谢喵🩷
+    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "🩷关注永雏塔菲喵🩷关注永雏塔菲谢谢喵🩷", NULL, NULL);
     if (window == NULL) {
         std::cout << "failed to create GLFW window" << std::endl;
         glfwTerminate();
@@ -57,6 +73,8 @@ int main() {
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {
@@ -180,7 +198,7 @@ int main() {
     // 设置过滤参数
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    data = stbi_load("/Users/ckl/VSCodeCpp/LearnOpenGL/img/awesomeface.png", &width, &height, &nrChannels, 0);
+    data = stbi_load("/Users/ckl/VSCodeCpp/LearnOpenGL/img/taffy.png", &width, &height, &nrChannels, 0);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -199,6 +217,8 @@ int main() {
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     // 设置回默认模式
     // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // render loop
     // -----------
@@ -226,18 +246,19 @@ int main() {
         // 模型矩阵 放到循环中
         // 投影矩阵
         glm::mat4 projection = glm::mat4(1.0f);
-        projection = glm::perspective(glm::radians(45.0f), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(fov), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
 
         ourShader.use();
         ourShader.setMat4("projection", projection);
+        ourShader.setFloat("taffy", taffy);
 
         glBindVertexArray(VAO);
         for (unsigned int i = 0; i < 10; i++) 
         {   
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, cubePositions[i]);
-            float angle = 20.0f * i;
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            float angle = 20.0f * (i + 1);
+            model = glm::rotate(model, (float)glfwGetTime() * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
             ourShader.setMat4("model", model);
             
             float radius = 10.0f;
@@ -262,12 +283,14 @@ int main() {
     glfwTerminate();
 }
 
-void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+void framebuffer_size_callback(GLFWwindow *window, int width, int height) 
+{
     glViewport(0, 0, width, height);
     // std::cout << "(" << width << ", " << height << ")" << std::endl;
 }
 
-void processInput(GLFWwindow *window) {
+void processInput(GLFWwindow *window) 
+{
     // 处理Esc退出
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) 
     {
@@ -291,4 +314,59 @@ void processInput(GLFWwindow *window) {
     {
         cameraPos -= cameraSpeed * glm::normalize(glm::cross(cameraFront, cameraUp));
     }
+    // 处理taffy透明度
+    float deltaTaffy = 0.01;
+    if (glfwGetKey(window, GLFW_KEY_KP_ADD) == GLFW_PRESS) 
+    {
+        taffy += deltaTaffy;
+        if (taffy > 1.0f)
+            taffy = 1.0f;
+    } 
+    else if (glfwGetKey(window, GLFW_KEY_KP_SUBTRACT) == GLFW_PRESS)
+    {
+        taffy -= deltaTaffy;
+        if (taffy < 0.0f)
+            taffy = 0.0f;
+    }
+}
+
+void mouse_callback(GLFWwindow *window, double xpos, double ypos) 
+{
+    if (firstMouse) {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = ypos - lastY;
+    lastX = xpos;
+    lastY = ypos;
+
+    float sensitivity = 0.05f;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+
+    yaw += xoffset;
+    pitch -= yoffset;
+
+    if (pitch > 89.0f) 
+        pitch = 89.0f;
+    if (pitch < -89.0f)
+        pitch = -89.0f;
+
+    glm::vec3 front;
+    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    front.y = sin(glm::radians(pitch));
+    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    cameraFront = glm::normalize(front);
+}
+
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) 
+{
+    fov -= (float) yoffset;
+    if (fov < 1.0f)
+        fov = 1.0f;
+    if (fov > 45.0f)
+        fov = 45.0f;
 }
