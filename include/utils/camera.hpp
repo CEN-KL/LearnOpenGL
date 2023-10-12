@@ -1,3 +1,4 @@
+// 练习1: 修改摄像机类，使得其能够变成一个真正的FPS摄像机（也就是说不能够随意飞行）；你只能够呆在xz平面上
 #ifndef CAMERA_H
 #define CAMERA_H
 
@@ -32,6 +33,8 @@ public:
     glm::vec3 Up;
     glm::vec3 Right;
     glm::vec3 WorldUp;
+    glm::vec3 Straight;
+    glm::vec3 StraightRight;
     // 欧拉角
     float Yaw;
     float Pitch;
@@ -70,13 +73,13 @@ public:
     {
         float velocity = MovementSpeed * deltaTime;
         if (direction == FORWARD)
-            Position += velocity * Front;
+            Position += velocity * Straight;
         else if (direction == BACKWARD)
-            Position -= velocity * Front;
+            Position -= velocity * Straight;
         else if (direction == RIGHT)
-            Position += velocity * Right;
+            Position += velocity * StraightRight;
         else if (direction == LEFT)
-            Position -= velocity * Right;
+            Position -= velocity * StraightRight;
     }
 
     void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrantPitch = true) 
@@ -118,6 +121,13 @@ private:
         // 计算右轴和上轴
         Right = glm::normalize(glm::cross(Front, WorldUp));   // 右轴通过方向向量和世界坐标的上轴做矢量叉乘得到
         Up    = glm::normalize(glm::cross(Right, Front));
+
+        glm::vec3 straight;
+        straight.y = 0.0f;
+        straight.x = cos(glm::radians(Yaw));
+        straight.z = sin(glm::radians(Yaw));
+        Straight = straight;
+        StraightRight = glm::normalize(glm::cross(Straight, WorldUp));
     }
         
 };
