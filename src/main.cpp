@@ -54,6 +54,8 @@ int main() {
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+
+    glEnable(GL_DEPTH_TEST);
     
     // 构建和编译自己定义的着色器
     // ---------------------
@@ -197,7 +199,6 @@ int main() {
         // render
         // ------
         glClearColor(.2f, 0.3f, 0.3f, 1.0f);
-        glEnable(GL_DEPTH_TEST);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // 绑定纹理
@@ -209,15 +210,11 @@ int main() {
         // 变换矩阵
         // ------
         // 模型矩阵 放到循环中
-        // 观察矩阵
-        glm::mat4 view = glm::mat4(1.0f);
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
         // 投影矩阵
         glm::mat4 projection = glm::mat4(1.0f);
         projection = glm::perspective(glm::radians(45.0f), (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
 
         ourShader.use();
-        ourShader.setMat4("view", view);
         ourShader.setMat4("projection", projection);
 
         glBindVertexArray(VAO);
@@ -225,15 +222,16 @@ int main() {
         {   
             glm::mat4 model = glm::mat4(1.0f);
             model = glm::translate(model, cubePositions[i]);
-            // 练习题做法
-            // --------
-            // float angle = 0;
-            // if (i % 3 == 0) {
-            //     angle = 20.0f * (i + 1);
-            // }
-            float angle = 20.0f * (i + 1);
-            model = glm::rotate(model, (float) glfwGetTime() * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            float angle = 20.0f * i;
+            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
             ourShader.setMat4("model", model);
+            
+            float radius = 10.0f;
+            float camX = sin(glfwGetTime()) * radius;
+            float camZ = cos(glfwGetTime()) * radius;
+            glm::mat4 view;
+            view = glm::lookAt(glm::vec3(camX, 0.0, camZ), glm::vec3(0.0, 0.0, 0.0), glm::vec3(0.0, 1.0, 0.0));
+            ourShader.setMat4("view", view);
 
             glDrawArrays(GL_TRIANGLES, 0, 36);
         }
