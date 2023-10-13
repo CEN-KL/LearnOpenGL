@@ -1,7 +1,10 @@
+// 试着创建你自己的LookAt函数，其中你需要手动创建一个我们在一开始讨论的观察矩阵。用你的函数实现来替换GLM的LookAt函数，看看它是否还能一样地工作
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#include "glm/fwd.hpp"
 #include "glm/geometric.hpp"
+#include <arm/limits.h>
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -62,7 +65,8 @@ public:
 
     glm::mat4 GetViewMatrix()
     {
-        return glm::lookAt(Position, Position + Front, Up);
+        // return glm::lookAt(Position, Position + Front, Up);
+        return myLookAt(Position, Position + Front, WorldUp);
     }
 
     // 处理来自键盘的输入
@@ -119,7 +123,36 @@ private:
         Right = glm::normalize(glm::cross(Front, WorldUp));   // 右轴通过方向向量和世界坐标的上轴做矢量叉乘得到
         Up    = glm::normalize(glm::cross(Right, Front));
     }
-        
+
+    glm::mat4 myLookAt(glm::vec3 pos, glm::vec3 target, glm::vec3 worldUp)
+    {
+        // 求出摄像机坐标系的三个单位向量
+        auto zaxis = glm::normalize(pos - target);
+        auto xaxis = glm::normalize(glm::cross(worldUp, zaxis));
+        auto yaxis = glm::normalize(glm::cross(zaxis, xaxis));
+
+        // 先旋转再平移
+        // ----------
+        // 注意注意注意！！！ In glm we access elements as mat[col][row] due to column-major layout
+        // 旋转矩阵
+        glm::mat4 rotation = glm::mat4(1.0f);
+        rotation[0][0] = xaxis.x; // First column, first row
+        rotation[1][0] = xaxis.y;
+        rotation[2][0] = xaxis.z;
+        rotation[0][1] = yaxis.x; // First column, second row
+        rotation[1][1] = yaxis.y;
+        rotation[2][1] = yaxis.z;
+        rotation[0][2] = zaxis.x; // First column, third row
+        rotation[1][2] = zaxis.y;
+        rotation[2][2] = zaxis.z;
+        // 平移矩阵
+        auto translation = glm::mat4(1.0f);
+        translation[3][0] = -pos.x;
+        translation[3][1] = -pos.y;
+        translation[3][2] = -pos.z;
+
+        return rotation * translation;
+    }
 };
 
-#endif
+#endif  
