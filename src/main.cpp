@@ -172,6 +172,7 @@ int main() {
         ourShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
         ourShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
         ourShader.setVec3("lightPos", lightPos);
+        ourShader.setVec3("viewPos", camera.Position);
 
         auto projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         auto view = camera.GetViewMatrix();
