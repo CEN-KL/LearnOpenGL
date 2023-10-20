@@ -13,7 +13,9 @@ struct Material {
 
 struct Light {
     vec3 position;
-    // vec3 direction; // 使用定向光（平行光）
+    vec3 direction; // 此处表示聚光所指的方向
+    float cutOff; // 聚光半径的切光角，落在这个角度之外的物体都不会被这个聚光所照亮。
+
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
@@ -29,36 +31,46 @@ uniform Light light;
 uniform vec3 viewPos;
 
 void main()
-{
-    // 冯氏光照模型
-    // 环境光照
-    // ------
-    vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords));
-
-    // 漫反射光照
-    // --------
-    vec3 norm = normalize(Normal);
+{   
     vec3 lightDir = normalize(light.position - FragPos);
-    float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoords));
+    float cos_theta = dot(lightDir, -light.direction);
+    if (cos_theta > light.cutOff)
+    {
+        // 冯氏光照模型
+        // 环境光照
+        // ------
+        vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords));
 
-    // 镜面光照
-    vec3 viewDir = normalize(FragPos - viewPos);
-    vec3 reflectDir = reflect(-lightDir, norm);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));
+        // 漫反射光照
+        // --------
+        vec3 norm = normalize(Normal);
+        // vec3 lightDir = normalize(light.position - FragPos);
+        float diff = max(dot(norm, lightDir), 0.0);
+        vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoords));
 
-    // 衰减计算
-    // 光源距离
-    float distance = length(light.position - FragPos);
-    float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * distance * distance);
-    ambient *= attenuation;
-    diffuse *= attenuation;
-    specular *= attenuation;
+        // 镜面光照
+        vec3 viewDir = normalize(FragPos - viewPos);
+        vec3 reflectDir = reflect(-lightDir, norm);
+        float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
+        vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));
 
-    // 最终输出
-    // ------
-    vec3 result = ambient + diffuse + specular;
-    FragColor = vec4(result, 1.0);
+        // 衰减计算
+        // 光源距离
+        float distance = length(light.position - FragPos);
+        float attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * distance * distance);
+        ambient *= attenuation;
+        diffuse *= attenuation;
+        specular *= attenuation;
+
+        // 最终输出
+        // ------
+        vec3 result = ambient + diffuse + specular;
+        FragColor = vec4(result, 1.0);
+    }
+    else 
+    {
+        vec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoords));
+        FragColor = vec4(ambient, 1.0);
+    }
 
 }
