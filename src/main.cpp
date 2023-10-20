@@ -155,6 +155,10 @@ int main() {
     ourShader.use();
     ourShader.setInt("material.diffuse", 0);
 
+    // 加载镜面光贴图
+    auto specularMap = loadTexture("/Users/ckl/VSCodeCpp/LearnOpenGL/img/container2_specular.png");
+    ourShader.setInt("material.specular", 1);
+
     // 使用线框模式绘制
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     // 设置回默认模式
@@ -167,7 +171,8 @@ int main() {
 
         // render
         // ------
-        glClearColor(.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        // glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // 跟踪时间差
@@ -205,6 +210,9 @@ int main() {
         // 绑定纹理
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, diffuseMap);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, specularMap);
 
         // 渲染物体
         glBindVertexArray(cubeVAO);
