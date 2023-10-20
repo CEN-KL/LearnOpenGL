@@ -196,14 +196,17 @@ int main() {
 
         ourShader.use();
         ourShader.setVec3("viewPos", camera.Position);
-        ourShader.setVec3("light.direction", -0.2f, -1.0f, -0.3f);
+        ourShader.setVec3("light.position", lightPos);
 
         ourShader.setVec3("light.ambient",  0.2f, 0.2f, 0.2f);
         ourShader.setVec3("light.diffuse",  0.5f, 0.5f, 0.5f); // 将光照调暗了一些以搭配场景
         ourShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f); 
 
-        ourShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
-        ourShader.setFloat("material.shininess", 64.0f);
+        ourShader.setFloat("material.shininess", 32.0f);
+
+        ourShader.setFloat("light.constant", 1.0f);
+        ourShader.setFloat("light.linear", 0.09f);
+        ourShader.setFloat("light.quadratic", 0.032f);
 
         // 物体的坐标变换矩阵
         auto projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
@@ -232,16 +235,16 @@ int main() {
         }
 
         // 光源的坐标变换矩阵
-        // lightShader.use();
-        // lightShader.setMat4("projection", projection);
-        // lightShader.setMat4("view", view);
-        // model = glm::mat4(1.0f);
-        // model = glm::translate(model, lightPos);
-        // model = glm::scale(model, glm::vec3(0.2f));
-        // lightShader.setMat4("model", model);
-        // // 绘制光源
-        // glBindVertexArray(lightVAO);
-        // glDrawArrays(GL_TRIANGLES, 0, 36);
+        lightShader.use();
+        lightShader.setMat4("projection", projection);
+        lightShader.setMat4("view", view);
+        auto model = glm::mat4(1.0f);
+        model = glm::translate(model, lightPos);
+        model = glm::scale(model, glm::vec3(0.2f));
+        lightShader.setMat4("model", model);
+        // 绘制光源
+        glBindVertexArray(lightVAO);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
         
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
