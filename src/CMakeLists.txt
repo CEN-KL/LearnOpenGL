@@ -1,6 +1,6 @@
 add_executable(main main.cpp glad.c stb_image.cpp)
 
-target_include_directories(main PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(main PRIVATE ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/configuration)
 target_link_directories(main PRIVATE ${CMAKE_SOURCE_DIR}/libs)
 
 # 链接编译需要的系统框架

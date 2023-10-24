@@ -11,6 +11,7 @@
 #include <utils/camera.hpp>
 #include <utils/model.hpp>
 #include <utils/mesh.hpp>
+#include <utils/filesystem.hpp>
 // #include <unistd.h>
 
 #include <iostream>
@@ -74,9 +75,9 @@ int main() {
     
     // 构建和编译自己定义的着色器
     // ---------------------
-    Shader ourShader("/Users/ckl/VSCodeCpp/LearnOpenGL/glsl/shader.vs", "/Users/ckl/VSCodeCpp/LearnOpenGL/glsl/shader.fs");
-    Shader lightShader("/Users/ckl/VSCodeCpp/LearnOpenGL/glsl/shader.vs", "/Users/ckl/VSCodeCpp/LearnOpenGL/glsl/light.fs");
-    Model ourModel("/Users/ckl/VSCodeCpp/LearnOpenGL/resources/objects/nanosuit/nanosuit.obj");
+    Shader ourShader(FileSystem::getPath("glsl/shader.vs").c_str(), FileSystem::getPath("glsl/shader.fs").c_str());
+    Shader lightShader(FileSystem::getPath("glsl/shader.vs").c_str(), FileSystem::getPath("glsl/light.fs").c_str());
+    Model ourModel(FileSystem::getPath("resources/objects/nanosuit/nanosuit.obj").c_str());
 
     // 顶点输入
     // ------
