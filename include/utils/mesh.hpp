@@ -6,6 +6,9 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <utils/shader_s.hpp>
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
 
 struct Vertex {
     glm::vec3 Position;     // 位置向量
@@ -16,6 +19,7 @@ struct Vertex {
 struct Texture {
     unsigned int id;        // 纹理id
     std::string type;       // 纹理类型
+    aiString path;
 };
 
 class Mesh {
