@@ -5,7 +5,7 @@
 #include <assimp/postprocess.h>
 #include "assimp/material.h"
 #include "assimp/mesh.h"
-#include "utils/shader_s.hpp"
+#include "utils/shader.hpp"
 #include <utils/mesh.hpp>
 #include <stb_image.h>
 #include <vector>

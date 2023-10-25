@@ -7,7 +7,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <utils/shader_s.hpp>
+#include <utils/shader.hpp>
 #include <utils/camera.hpp>
 #include <utils/model.hpp>
 #include <utils/mesh.hpp>
